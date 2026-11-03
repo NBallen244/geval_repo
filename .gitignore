@@ -1,0 +1,15 @@
+# Entornos virtuales de Python
+.venv/
+venv/
+env/
+ENV/
+
+# Cachés y archivos compilados de Python (incluido Python 3.12 en Linux)
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
