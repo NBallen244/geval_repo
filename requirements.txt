@@ -1,0 +1,6 @@
+﻿# Runtime dependencies for geval.py (Python 3.12).
+pandas
+langchain-ollama
+deepeval
+openpyxl
+
