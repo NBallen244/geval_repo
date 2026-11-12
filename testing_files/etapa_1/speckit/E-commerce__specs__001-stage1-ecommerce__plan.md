@@ -40,7 +40,7 @@ Ends the active authenticated session on the backend by invalidating the active 
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-- **Fidelity to especificacion-semilla-final-en.md**: PASSED. No scope expansion or unrequested business rules.
+- **Fidelity to SEED.md**: PASSED. No scope expansion or unrequested business rules.
 - **English-Only Language Rules**: PASSED. All documentation, source code, comments, and UI text are strictly in English.
 - **Specification-First Review**: PASSED. The spec was completely reviewed, atomic requirements generated, and approved before planning.
 - **No Early Application Code**: PASSED. No application source files, tests, database scripts, or scaffolding are created in this planning phase.

@@ -6,7 +6,7 @@
 
 **Status**: Draft
 
-**Input**: User description: "Build the Stage 1 e-commerce application defined in @especificacion-semilla-final-en.md. Use that file as the sole functional source."
+**Input**: User description: "Build the Stage 1 e-commerce application defined in @SEED.md. Use that file as the sole functional source."
 
 ## User Scenarios & Testing
 

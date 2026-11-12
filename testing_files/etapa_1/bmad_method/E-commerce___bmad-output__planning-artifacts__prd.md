@@ -1,7 +1,7 @@
 # Product Requirements Document (PRD) - Stage 1 E-Commerce Case
 
 ## 1. Document Purpose and Scope
-This Product Requirements Document (PRD) outlines the requirements for Stage 1 of the E-Commerce Case. It is derived solely from `especificacion-semilla-final-en.md`, which serves as the canonical seed and the only functional source for the project. 
+This Product Requirements Document (PRD) outlines the requirements for Stage 1 of the E-Commerce Case. It is derived solely from `SEED.md`, which serves as the canonical seed and the only functional source for the project. 
 
 The goal of Stage 1 is to implement an executable, simple, but complete demonstration e-commerce web application that covers the main purchasing journey: browsing products, managing a local cart, registering or signing in, and completing a fictitious checkout.
 

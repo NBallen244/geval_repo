@@ -31,7 +31,7 @@
 
 ## Notes
 
-- Re-evaluated the specification against the seed `especificacion-semilla-final-en.md` after applying the final corrections.
+- Re-evaluated the specification against the seed `SEED.md` after applying the final corrections.
 - Confirmed that registration and sign-in are kept as distinct capabilities while leaving the post-registration automatic session behavior unspecified.
 - Confirmed that User Story 2, Acceptance Scenario 1 ends strictly with successful account creation, while a separate sign-in scenario handles session activation.
 - Confirmed that the cart-persistence assumption states exactly that durable cart persistence across browser closures or separate sessions is not mandatory.

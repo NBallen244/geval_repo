@@ -1,6 +1,6 @@
 # Epics and User Stories - Stage 1 E-Commerce Case
 
-This document decomposes the requirements for Stage 1 of the E-Commerce Case into atomic, independent, and verifiable User Stories. Each story contains exact Acceptance Criteria (AC) mapped directly from the canonical seed specification (`especificacion-semilla-final-en.md`) and the approved planning roadmap, correcting all over-prescribed or invented constraints.
+This document decomposes the requirements for Stage 1 of the E-Commerce Case into atomic, independent, and verifiable User Stories. Each story contains exact Acceptance Criteria (AC) mapped directly from the canonical seed specification (`SEED.md`) and the approved planning roadmap, correcting all over-prescribed or invented constraints.
 
 ---
 

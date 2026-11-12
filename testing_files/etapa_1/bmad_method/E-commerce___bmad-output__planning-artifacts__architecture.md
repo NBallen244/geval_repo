@@ -5,7 +5,7 @@ This document details the software architecture for Stage 1. It distinguishes st
 ---
 
 ## 1. Canonical Technical Requirements
-These requirements represent the mandatory technical constraints and boundaries established by `especificacion-semilla-final-en.md`. They must be followed without exception:
+These requirements represent the mandatory technical constraints and boundaries established by `SEED.md`. They must be followed without exception:
 
 - **Frontend Technology**: React and TypeScript.
 - **Backend Technology**: Python and FastAPI.
