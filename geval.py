@@ -10,13 +10,82 @@ from deepeval.models import DeepEvalBaseLLM
 from deepeval.test_case import LLMTestCase
 from deepeval.metrics import BaseMetric
 
+# Taxonomía cerrada SWEBOK v4.0a usada para validar la respuesta del modelo.
+SWEBOK_TAXONOMY = {
+    "Software Requirements": {
+        "Requirements Fundamentals", "Requirements Elicitation", "Requirements Analysis",
+        "Requirements Specification", "Requirements Validation", "Requirements Management Activities",
+        "Practical Considerations", "Software Requirements Tools",
+    },
+    "Software Architecture": {
+        "Software Architecture Fundamentals", "Software Architecture Description",
+        "Software Architecture Process", "Software Architecture Evaluation",
+    },
+    "Software Design": {
+        "Software Design Fundamentals", "Software Design Processes", "Software Design Qualities",
+        "Recording Software Designs", "Software Design Strategies and Methods",
+        "Software Design Quality Analysis and Evaluation",
+    },
+    "Software Construction": {
+        "Software Construction Fundamentals", "Managing Construction", "Practical Considerations",
+        "Construction Technologies", "Software Construction Tools",
+    },
+    "Software Testing": {
+        "Software Testing Fundamentals", "Test Levels", "Test Techniques", "Test-Related Measures",
+        "Test Process", "Software Testing in Development Processes and Application Domains",
+        "Testing of and Testing Through Emerging Technologies", "Software Testing Tools",
+    },
+    "Software Engineering Operations": {
+        "Software Engineering Operations Fundamentals", "Software Engineering Operations Planning",
+        "Software Engineering Operations Delivery", "Software Engineering Operations Control",
+        "Software Engineering Operations Tools",
+    },
+    "Software Maintenance": {
+        "Software Maintenance Fundamentals", "Key Issues in Software Maintenance",
+        "Software Maintenance Processes", "Software Maintenance Techniques", "Software Maintenance Tools",
+    },
+    "Software Configuration Management": {
+        "Management of the SCM Process", "Software Configuration Identification",
+        "Software Configuration Change Control", "Software Configuration Status Accounting",
+        "Software Configuration Auditing", "Software Release Management and Delivery",
+        "Software Configuration Management Tools",
+    },
+    "Software Engineering Management": {
+        "Initiation and Scope Definition", "Software Project Planning", "Software Project Execution",
+        "Software Review and Evaluation", "Closure", "Software Engineering Measurement",
+        "Software Engineering Management Tools",
+    },
+    "Software Engineering Process": {
+        "Software Engineering Process Fundamentals", "Life Cycles",
+        "Software Process Assessment and Improvement",
+    },
+    "Software Engineering Models and Methods": {
+        "Modeling", "Types of Models", "Analysis of Models", "Software Engineering Methods",
+    },
+    "Software Quality": {
+        "Software Quality Fundamentals", "Software Quality Management Process",
+        "Software Quality Assurance Process", "Software Quality Tools",
+    },
+    "Software Security": {
+        "Software Security Fundamentals", "Security Management and Organization",
+        "Software Security Engineering and Processes", "Security Engineering for Software Systems",
+        "Software Security Tools", "Domain-Specific Software Security",
+    },
+    "Software Engineering Professional Practice": {
+        "Professionalism", "Group Dynamics and Psychology", "Communication Skills",
+    },
+    "Software Engineering Economics": {
+        "Software Engineering Economics Fundamentals", "The Engineering Decision-Making Process",
+        "For-Profit & Nonprofit Decision-Making", "Estimation", "Practical Considerations",
+    },
+}
+
 # 1. Configurar Ollama como motor para DeepEval
 class OllamaLocal(DeepEvalBaseLLM):
     def __init__(self, model_name="qwen2.5-coder:14b"):
         self.model = ChatOllama(
             model=model_name,
             temperature=0.0,
-            num_ctx=4096 # Vital para no saturar la VRAM
         )
 
     def load_model(self):
@@ -164,19 +233,18 @@ For each identified element (up to 5), assign an "alignment" from 1 to 10 based 
 - 4 to 6: Secondary presence. Clear code blocks, diagrams, or schemas exist, but it shares focus with other topics.
 - 1 to 3: Minor mention. Touched upon very superficially or marginally.
 
+For every classification, also provide a "justification" in Spanish consisting of 2 to 3 sentences. Explain which evidence in the document supports the selected KA/topic and why that evidence warrants the assigned alignment score. Keep the justification specific to that classification.
+
 DOCUMENT:
 {test_case.input}
 
-Return ONLY a valid JSON object containing an array named "classifications". Sort the array from highest to lowest "alignment". Do not include any extra text outside the JSON object.
+Return ONLY a valid JSON object containing an array named "classifications". Sort the array from highest to lowest "alignment". Every classification must use an exact KA and topic name from the taxonomy above. Do not include any extra text outside the JSON object.
 
 Exact example structure:
 {{
   "classifications": [
-    {{"KA": "Software Design", "topic": "Recording Software Designs", "alignment": 9}},
-    {{"KA": "Software Requirements", "topic": "Requirements Specification", "alignment": 8}},
-    {{"KA": "Software Testing", "topic": "Test Techniques", "alignment": 6}},
-    {{"KA": "Software Architecture", "topic": "Architecture Description", "alignment": 4}},
-    {{"KA": "Software Construction", "topic": "Practical Considerations", "alignment": 2}}
+    {{"KA": "Software Design", "topic": "Recording Software Designs", "alignment": 9, "justification": "El documento define estructuras y comportamientos del sistema. Ese contenido corresponde directamente al registro de diseños y justifica una alineación alta."}},
+    {{"KA": "Software Requirements", "topic": "Requirements Specification", "alignment": 8, "justification": "El documento formula requisitos y criterios de aceptación concretos. Son elementos centrales, aunque comparten el documento con otros temas."}}
   ]
 }}
 """
@@ -196,8 +264,19 @@ Exact example structure:
                     alignment = int(item.get("alignment"))
                 except (TypeError, ValueError):
                     continue
-                if ka and topic and 1 <= alignment <= 10:
-                    normalized.append({"KA": ka, "topic": topic, "alignment": alignment})
+                justification = str(item.get("justification", "")).strip()
+                if (ka in SWEBOK_TAXONOMY
+                        and topic in SWEBOK_TAXONOMY[ka]
+                        and 1 <= alignment <= 10
+                        and justification):
+                    normalized.append({
+                        "KA": ka,
+                        "topic": topic,
+                        "alignment": alignment,
+                        "justification": justification,
+                    })
+                    if len(normalized) == 5:
+                        break
 
             self.evaluation_result = normalized
             self.score = 1.0 if normalized else 0.0
@@ -237,7 +316,7 @@ def ejecutar_analisis(modelo, tiempo_limite_minutos=0):
     start_time = time.monotonic()
 
     def save_stage_report(stage, results):
-        columns = ["tool", "KA", "topic", "alignment"]
+        columns = ["tool", "KA", "topic", "alignment", "justification"]
         records = pd.DataFrame(results, columns=columns)
         report_path = os.path.join(reports_root, f"{stage}.xlsx")
 
@@ -284,7 +363,7 @@ def ejecutar_analisis(modelo, tiempo_limite_minutos=0):
                         break
 
                     with open(file_path, "r", encoding="utf-8") as source:
-                        content = source.read()[:8000]
+                        content = source.read()
                     if not content.strip():
                         continue
 
@@ -297,6 +376,7 @@ def ejecutar_analisis(modelo, tiempo_limite_minutos=0):
                             "KA": classification["KA"],
                             "topic": classification["topic"],
                             "alignment": classification["alignment"],
+                            "justification": classification["justification"],
                         })
                     # Save after each file so interrupted runs keep completed work.
                     save_stage_report(stage, stage_results)
