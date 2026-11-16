@@ -235,6 +235,13 @@ For each identified element (up to 5), assign an "alignment" from 1 to 10 based 
 
 For every classification, also provide a "justification" in Spanish consisting of 2 to 3 sentences. Explain which evidence in the document supports the selected KA/topic and why that evidence warrants the assigned alignment score. Keep the justification specific to that classification.
 
+For every classification, also provide a "steps" array containing exactly FOUR concise steps in Spanish, in this order:
+1. Búsqueda: state what technical aspect, artifact, pattern, practice and/or content you looked for to evaluate this KA/topic.
+2. Evidencia: identify the evidence found in the Markdown, using its heading or a short excerpt when available. Do not invent evidence.
+3. Relación: explain how that evidence maps to the selected SWEBOK KA and topic.
+4. Rúbrica: explain how the evidence supports the selected alignment score under the rubric above, identifying the specific aspects or criteria that justify the score.
+Make these steps a concise, evidence-based explanation of the classification, not a transcript of private internal reasoning. Keep them specific to that classification and do not repeat the justification verbatim.
+
 DOCUMENT:
 {test_case.input}
 
@@ -243,8 +250,8 @@ Return ONLY a valid JSON object containing an array named "classifications". Sor
 Exact example structure:
 {{
   "classifications": [
-    {{"KA": "Software Design", "topic": "Recording Software Designs", "alignment": 9, "justification": "El documento define estructuras y comportamientos del sistema. Ese contenido corresponde directamente al registro de diseños y justifica una alineación alta."}},
-    {{"KA": "Software Requirements", "topic": "Requirements Specification", "alignment": 8, "justification": "El documento formula requisitos y criterios de aceptación concretos. Son elementos centrales, aunque comparten el documento con otros temas."}}
+    {{"KA": "Software Design", "topic": "Recording Software Designs", "alignment": 9, "justification": "El documento define estructuras y comportamientos del sistema. Ese contenido corresponde directamente al registro de diseños y justifica una alineación alta.", "steps": ["Búsqueda: busqué artefactos que describieran la estructura o el comportamiento del sistema.", "Evidencia: encontré secciones que detallan esas estructuras y comportamientos.", "Relación: esa documentación registra decisiones y descripciones de diseño de software.", "Rúbrica: el diseño ocupa el foco central del documento, por eso corresponde una alineación de 9."]}},
+    {{"KA": "Software Requirements", "topic": "Requirements Specification", "alignment": 8, "justification": "El documento formula requisitos y criterios de aceptación concretos. Son elementos centrales, aunque comparten el documento con otros temas.", "steps": ["Búsqueda: busqué requisitos funcionales y criterios de aceptación.", "Evidencia: encontré requisitos y criterios de éxito explícitos.", "Relación: esos elementos especifican el comportamiento esperado del software.", "Rúbrica: hay secciones extensas sobre requisitos, aunque el documento también cubre otros temas; corresponde una alineación de 8."]}}
   ]
 }}
 """
@@ -265,6 +272,12 @@ Exact example structure:
                 except (TypeError, ValueError):
                     continue
                 justification = str(item.get("justification", "")).strip()
+                raw_steps = item.get("steps")
+                if (not isinstance(raw_steps, list)
+                        or len(raw_steps) != 4
+                        or any(not isinstance(step, str) or not step.strip() for step in raw_steps)):
+                    continue
+                steps = [step.strip() for step in raw_steps]
                 if (ka in SWEBOK_TAXONOMY
                         and topic in SWEBOK_TAXONOMY[ka]
                         and 1 <= alignment <= 10
@@ -274,6 +287,7 @@ Exact example structure:
                         "topic": topic,
                         "alignment": alignment,
                         "justification": justification,
+                        "steps": steps,
                     })
                     if len(normalized) == 5:
                         break
@@ -316,7 +330,7 @@ def ejecutar_analisis(modelo, tiempo_limite_minutos=0):
     start_time = time.monotonic()
 
     def save_stage_report(stage, results):
-        columns = ["tool", "KA", "topic", "alignment", "justification"]
+        columns = ["tool", "KA", "topic", "alignment", "justification", "steps"]
         records = pd.DataFrame(results, columns=columns)
         report_path = os.path.join(reports_root, f"{stage}.xlsx")
 
@@ -377,6 +391,10 @@ def ejecutar_analisis(modelo, tiempo_limite_minutos=0):
                             "topic": classification["topic"],
                             "alignment": classification["alignment"],
                             "justification": classification["justification"],
+                            "steps": "\n".join(
+                                f"{index}. {step}"
+                                for index, step in enumerate(classification["steps"], start=1)
+                            ),
                         })
                     # Save after each file so interrupted runs keep completed work.
                     save_stage_report(stage, stage_results)
